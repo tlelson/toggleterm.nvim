@@ -15,6 +15,7 @@ local commandline = lazy.require("toggleterm.commandline")
 
 local terms = require("toggleterm.terminal")
 
+local lines = {}
 local AUGROUP = "ToggleTermCommands"
 -----------------------------------------------------------
 -- Export
@@ -195,7 +196,6 @@ function M.send_lines_to_terminal(selection_type, trim_spaces, cmd_data)
 
   local current_window = api.nvim_get_current_win() -- save current window
 
-  local lines = {}
   -- Beginning of the selection: line number, column number
   local start_line, start_col
   if selection_type == "single_line" then
@@ -211,6 +211,15 @@ function M.send_lines_to_terminal(selection_type, trim_spaces, cmd_data)
     lines = utils.get_visual_selection(res)
   end
 
+  M.exec_lines(id, trim_spaces, current_window, start_line, start_col)
+end
+
+--- @param id number
+--- @param trim_spaces boolean
+--- @param current_window unknown (window handle)
+--- @param start_line number
+--- @param start_col number
+function M.exec_lines(id, trim_spaces, current_window, start_line, start_col)
   if not lines or not next(lines) then return end
 
   for _, line in ipairs(lines) do
@@ -221,6 +230,16 @@ function M.send_lines_to_terminal(selection_type, trim_spaces, cmd_data)
   -- Jump back with the cursor where we were at the beginning of the selection
   api.nvim_set_current_win(current_window)
   api.nvim_win_set_cursor(current_window, { start_line, start_col })
+end
+
+--- @param cmd_data table<string, any>
+function M.repeat_last_command(cmd_data)
+  local id = tonumber(cmd_data.args) or 1
+  local current_window = api.nvim_get_current_win() -- save current window
+  local start_line, start_col
+  start_line, start_col = unpack(api.nvim_win_get_cursor(0))
+
+  M.exec_lines(id, false, current_window, start_line, start_col)
 end
 
 function M.toggle_command(args, count)
@@ -384,6 +403,12 @@ local function setup_commands()
     "ToggleTermSendVisualSelection",
     function(args) M.send_lines_to_terminal("visual_selection", true, args) end,
     { range = true, nargs = "?" }
+  )
+
+  cmd(
+    "ToggleTermRepeat",
+    function(args) M.repeat_last_command(args) end,
+    { range = false}
   )
 
   cmd(
