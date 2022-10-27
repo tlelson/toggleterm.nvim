@@ -200,7 +200,7 @@ function M.send_lines_to_terminal(selection_type, trim_spaces, cmd_data)
   local start_line, start_col
   if selection_type == "single_line" then
     start_line, start_col = unpack(api.nvim_win_get_cursor(0))
-    table.insert(lines, fn.getline(start_line))
+    lines = {fn.getline(start_line)}
   elseif selection_type == "visual_lines" then
     local res = utils.get_line_selection("visual")
     start_line, start_col = unpack(res.start_pos)
