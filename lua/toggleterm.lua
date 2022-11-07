@@ -221,8 +221,11 @@ function M.send_lines_to_terminal(selection_type, trim_spaces, cmd_data)
 
   for _, line in ipairs(lines) do
     local l = trim_spaces and line:gsub("^%s+", ""):gsub("%s+$", "") or line
+    if l == '' then goto continue end -- skip empty lines
     M.exec(l, id)
+    ::continue::
   end
+  M.exec('\n', id) -- skip empty lines and finish with this for ipython shell
 
   -- Jump back with the cursor where we were at the beginning of the selection
   api.nvim_set_current_win(current_window)
@@ -388,7 +391,7 @@ local function setup_commands()
 
   cmd(
     "ToggleTermSendVisualSelection",
-    function(args) M.send_lines_to_terminal("visual_selection", true, args) end,
+    function(args) M.send_lines_to_terminal("visual_selection", false, args) end,
     { range = true, nargs = "?" }
   )
 
